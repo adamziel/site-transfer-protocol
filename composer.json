@@ -1,0 +1,17 @@
+{
+    "name": "wordpress/transfer-protocol",
+    "autoload": {
+        "psr-4": {
+            "Wordpress\\TransferProtocol\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Adam Zieliński",
+            "email": "adam@adamziel.com"
+        }
+    ],
+    "require": {
+        "rowbot/url": "^4.0"
+    }
+}

@@ -1,0 +1,28 @@
+Replacing https://🚀-science.com/science with https://science.wordpress.com in the input.
+
+<!-- wp:paragraph -->
+<p>
+	<!-- Inline URLs are migrated -->
+	science.wordpress.com has the best scientific articles on the internet! We're also
+	available via the punycode URL:
+	
+	<!-- No problem handling HTML-encoded punycode URLs with urlencoded characters in the path -->
+	https://science.wordpress.com/.
+	
+	<!-- Correctly ignores similar–but–different URLs -->
+	This isn't migrated: https://🚀-science.comcast/science <br>
+	Or this: super-🚀-science.com/science
+</p>
+<!-- /wp:paragraph -->
+
+<!-- Block attributes are migrated without any issue -->
+<!-- wp:image {"src":"https:\/\/science.wordpress.com\/wp-content\/image.png"} -->
+<!-- As are URI HTML attributes -->
+<img src="https://science.wordpress.com/wp-content/image.png">
+<!-- /wp:image -->
+
+<!-- Non-URL attributes are not migrated. -->
+<span class="https://🚀-science.com/science"></span>
+
+<!-- This also has downsides, we may need to refine the attribute migration rules to account for this: -->
+<button data-url="It's so great on https://🚀-science.com/science">Hello!</button>
