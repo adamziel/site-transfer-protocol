@@ -54,11 +54,16 @@ When this code is fed into the migrator:
 <!-- As are URI HTML attributes -->
 <img src="&#104;ttps://xn---&#115;&#99;ience-7f85g.com/science/wp-content/image.png">
 <!-- /wp:image -->
+
+<!-- Classes are not migrated. -->
+<span class="https://🚀-science.com/science"></span>
 ```
 
 This actual output is produced:
 
 ```html
+Replacing https://🚀-science.com/science with https://science.wordpress.com in the input.
+
 <!-- wp:paragraph -->
 <p>
 	<!-- Inline URLs are migrated -->
@@ -68,9 +73,9 @@ This actual output is produced:
 	<!-- No problem handling HTML-encoded punycode URLs with urlencoded characters in the path -->
 	https://science.wordpress.com/.
 	
-	<!-- Correctly ignores similar‚Äďbut‚Äďdifferent URLs -->
-	This isn't migrated: https://ūüöÄ-science.comcast/science <br>
-	Or this: super-ūüöÄ-science.com/science
+	<!-- Correctly ignores similar–but–different URLs -->
+	This isn't migrated: https://🚀-science.comcast/science <br>
+	Or this: super-🚀-science.com/science
 </p>
 <!-- /wp:paragraph -->
 
@@ -79,6 +84,9 @@ This actual output is produced:
 <!-- As are URI HTML attributes -->
 <img src="https://science.wordpress.com/wp-content/image.png">
 <!-- /wp:image -->
+
+<!-- Classes are not migrated. -->
+<span class="https://🚀-science.com/science"></span>
 ```
 
 ### Related projects
