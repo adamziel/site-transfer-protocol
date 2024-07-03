@@ -54,11 +54,21 @@ switch ( $command ) {
 		}
 
 		echo "Replacing $base_url with " . $options['new-site-url'] . " in the input.\n\n";
-		wp_migrate_site_urls_in_block_markup( array(
+		if (!is_dir('./assets')) {
+			mkdir('./assets/', 0777, true);
+		}
+		$result = wp_migrate_post_content_urls( array(
 			'block_markup' => $block_markup,
 			'base_url' => $base_url,
 			'current-site-url' => $options['current-site-url'],
 			'new-site-url' => $options['new-site-url'],
+			'local-assets-path' => './assets/'
 		) );
+		if(!is_string($result)) {
+			echo "Error! \n";
+			print_r($result);
+			exit( 1 );
+		}
+		echo $result;
 		break;
 }

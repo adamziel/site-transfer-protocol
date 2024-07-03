@@ -62,8 +62,6 @@ When this code is fed into the migrator:
 This actual output is produced:
 
 ```html
-Replacing https://🚀-science.com/science with https://science.wordpress.com in the input.
-
 <!-- wp:paragraph -->
 <p>
 	<!-- Inline URLs are migrated -->
