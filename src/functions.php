@@ -1,5 +1,8 @@
 <?php
 
+use \WordPress\AsyncHttp\Client;
+use \WordPress\AsyncHttp\Request;
+
 function wp_list_urls_in_block_markup( $options ) {
 	$block_markup = $options['block_markup'];
 	$base_url     = $options['base_url'] ?? 'https://playground.internal';
@@ -160,103 +163,48 @@ function iterate_urls($p, $current_site_url) {
  * 
  * @param array $options {
  *     @type int|null concurrency How many concurrent downloads to run.
- *     @type string   concurrency An array of { remote URL => local path }.
+ *     @type string   assets An array of { remote URL => local path }.
  * }
- * @return array An array of download errors in format { remote URL => error }.
+ * @return array An array of download errors in format { success => boolean, remote URL => error }.
  */
 function wp_download_files($options) {
-	$concurrency = $options['concurrency'] ?? 10;
-	$assets = $options['assets'];
+	$requests = [];
+	$local_paths = [];
+	foreach ($options['assets'] as $asset_url => $local_file) {
+		$request = new Request($asset_url);
+		$requests[] = $request;
+		$local_paths[$request->id] = $local_file;
+	}
 
-    $mh = curl_multi_init();
-	$errors = [];
-    $handles = [];
-    $active_handles = 0;
-    
-    foreach ($assets as $url => $local_path) {
-        // Initialize curl handle
-        $ch = curl_init($url);
-        $fp = fopen($local_path, 'w');
-    
-        curl_setopt($ch, CURLOPT_FILE, $fp);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-    
-        // Add handle to multi-handle
-        curl_multi_add_handle($mh, $ch);
-        $handles[(int) $ch] = ['handle' => $ch, 'fp' => $fp, 'url' => $url];
-        $active_handles++;
-    
-        // When window_size is reached, execute handles
-        if ($active_handles == $concurrency) {
-            do {
-                $execrun = curl_multi_exec($mh, $running);
-            } while ($execrun == CURLM_CALL_MULTI_PERFORM);
-    
-            while ($running && $execrun == CURLM_OK) {
-                if (curl_multi_select($mh) == -1) {
-                    usleep(100);
-                }
-    
-                do {
-                    $execrun = curl_multi_exec($mh, $running);
-                } while ($execrun == CURLM_CALL_MULTI_PERFORM);
-            }
-    
-            while ($done = curl_multi_info_read($mh)) {
-                $handle = $done['handle'];
-                $fp = $handles[(int) $handle]['fp'];
-
-				if (curl_errno($handle)) {
-					$errors[$handles[(int) $handle]['url']] = curl_error($handle);
-				}
-    
-                curl_multi_remove_handle($mh, $handle);
-                curl_close($handle);
-                fclose($fp);
-    
-                unset($handles[(int) $handle]);
-                $active_handles--;
-            }
-        }
-    }
-    
-    // Process any remaining handles
-    do {
-        $execrun = curl_multi_exec($mh, $running);
-    } while ($execrun == CURLM_CALL_MULTI_PERFORM);
-    
-    while ($running && $execrun == CURLM_OK) {
-        if (curl_multi_select($mh) == -1) {
-            usleep(100);
-        }
-    
-        do {
-            $execrun = curl_multi_exec($mh, $running);
-        } while ($execrun == CURLM_CALL_MULTI_PERFORM);
-    }
-    
-    while ($done = curl_multi_info_read($mh)) {
-        $handle = $done['handle'];
-		if (curl_errno($handle)) {
-			$errors[$handles[(int) $handle]['url']] = curl_error($handle);
-		}
-
-        $fp = $handles[(int) $handle]['fp'];
-        curl_multi_remove_handle($mh, $handle);
-        curl_close($handle);
-        fclose($fp);
-    
-        unset($handles[(int) $handle]);
-    }
-    
-    curl_multi_close($mh);
+	$client = new Client( [
+		'concurrency' => 10,
+	] );
+	$client->enqueue( $requests );
 
 	$results = [];
-	foreach($assets as $url => $local_path) {
-		$results[$url] = [
-			'success' => !isset($errors[$url]),
-			'error' => $errors[$url] ?? null,
-		];
+	while ( $client->await_next_event() ) {
+		$request = $client->get_request();
+		
+		switch ( $client->get_event() ) {
+			case Client::EVENT_BODY_CHUNK_AVAILABLE:
+				file_put_contents(
+					$local_paths[$request->original_request()->id],
+					$client->get_response_body_chunk(),
+					FILE_APPEND
+				);
+				break;
+			case Client::EVENT_FAILED:
+				$results[$request->original_request()->url] = [
+					'success' => false,
+					'error' => $request->error,
+				];
+				break;
+			case Client::EVENT_FINISHED:
+				$results[$request->original_request()->url] = [
+					'success' => true
+				];
+				break;
+		}
 	}
 	return $results;
 }
