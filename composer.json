@@ -3,7 +3,10 @@
     "autoload": {
         "psr-4": {
             "Wordpress\\TransferProtocol\\": "src/"
-        }
+        },
+        "classmap": [
+            "vendor/blueprints-library/src/WordPress/"
+        ]
     },
     "authors": [
         {
