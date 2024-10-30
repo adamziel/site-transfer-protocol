@@ -1,3 +1,12 @@
+## Outdated project
+
+This was fully ported to https://github.com/WordPress/wordpress-playground as
+a part of the [Data Liberation project](https://github.com/WordPress/wordpress-playground/issues/1894).
+
+The ported code is now available at https://github.com/WordPress/wordpress-playground/tree/e17cbbdbf9340ef18a1404d70f1ad9d1d431a3d3/packages/playground/data-liberation
+
+---
+
 ## Site Transfer Protocol prototype
 
 This is an exploration of what could become the WordPress
